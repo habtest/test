@@ -83,13 +83,10 @@ func getBanner(banners []banner, cats map[string]*category, userCats []string) (
 			continue
 		}
 
-		// decrement shows count for banner
-		curShows := atomic.LoadUint64(&banner.shows)
-		if curShows == 0 {
-			continue
-		}
-
-		if !atomic.CompareAndSwapUint64(&banner.shows, curShows, curShows-1) {
+		// try to decrement shows count for banner
+		curShows := atomic.AddUint64(&banner.shows, ^uint64(0))
+		if int64(curShows) < 0 {
+			atomic.AddUint64(&banner.shows, 1)
 			continue
 		}
 
